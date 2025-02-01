@@ -2,13 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyAPjDKPAC1-96CciA5ql-8GkHJ6_9xcrtE",
-    authDomain: "web-biblia.firebaseapp.com",
-    projectId: "web-biblia",
-    storageBucket: "web-biblia.firebasestorage.app",
-    messagingSenderId: "311467973052",
-    appId: "1:311467973052:web:56df9a44fe1356cccfb3b9",
-    measurementId: "G-TNK2N2L3DL"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN ,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID, 
   };
 
 // Inicializar Firebase
