@@ -21,22 +21,33 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center h-screen w-screen bg-gray-800">
-      <div className="bg-white shadow-xl rounded-2xl p-10 w-[450px] text-center">
-        <h2 className="text-3xl font-bold text-gray-700 mb-6">Iniciar Sesión</h2>
-        
+    <div className="min-h-screen bg-gradient-to-b from-blue-600 to-cyan-300 flex flex-col items-center justify-center p-4">
+      {/* Contenedor principal */}
+      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl shadow-blue-400 max-w-md w-full text-center">
+        {/* Título con emoji */}
+        <h1 className="text-3xl sm:text-4xl font-bold text-blue-700 mb-4">
+          📖 Biblia Reina Valera
+        </h1>
+        <p className="text-black text-sm sm:text-base mb-6 sm:mb-8">
+          Inicia sesión para acceder a la Biblia Reina Valera.
+        </p>
+
+        {/* Botón de Google */}
         <button
           onClick={handleGoogleSignIn}
-          className="flex items-center justify-center w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg mb-4 transition-all text-lg"
+          className="w-full flex items-center justify-center gap-2 bg-blue-300 border border-gray-400 text-gray-700 font-semibold py-2 sm:py-3 px-4 rounded-lg shadow-sm hover:shadow-md transition-all mb-4"
         >
-          <FaGoogle className="mr-3 text-xl" /> Iniciar con Google
+          <FaGoogle className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="text-sm sm:text-base">Iniciar con Google</span>
         </button>
 
+        {/* Botón de GitHub */}
         <button
           onClick={handleGithubSignIn}
-          className="flex items-center justify-center w-full bg-gray-900 hover:bg-gray-950 text-white font-medium py-3 px-4 rounded-lg transition-all text-lg"
+          className="w-full flex items-center justify-center gap-2 bg-gray-800 text-white font-semibold py-2 sm:py-3 px-4 rounded-lg shadow-sm hover:shadow-md transition-all"
         >
-          <FaGithub className="mr-3 text-xl" /> Iniciar con GitHub
+          <FaGithub className="w-5 h-5 sm:w-6 sm:h-6" />
+          <span className="text-sm sm:text-base">Iniciar con GitHub</span>
         </button>
       </div>
     </div>
