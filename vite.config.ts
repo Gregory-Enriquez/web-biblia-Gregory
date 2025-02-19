@@ -1,18 +1,26 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import type { UserConfig as VitestUserConfig } from 'vitest/config';
+import path from 'path';
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()], // Plugins de Vite
-  test: {             // Configuración de Vitest
-    globals: true,    // Hace que las funciones de Vitest estén disponibles globalmente
-    environment: 'jsdom', // Simula un entorno de navegador
-    setupFiles: './src/setupTests.ts', // Archivo de configuración inicial para pruebas
-    coverage: {       // Configuración de cobertura (opcional)
-      provider: 'c8', // Usa c8 para generar el reporte de cobertura
-      reporter: ['text', 'json', 'html'], // Formatos del reporte
-      include: ['src/**/*.{ts,tsx}'], // Incluye solo los archivos de tu código fuente
-      exclude: ['src/**/*.test.{ts,tsx}'], // Excluye los archivos de pruebas
+  plugins: [react()],
+  resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'), // Configura el alias @ para apuntar a 
+  // eslint-disable-next-line no-irregular-whitespace
+   },
+},
+      
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: "./setupTests.ts",
+    coverage: {
+      provider: 'v8', // Usa Istanbul para el reporte de cobertura
+      reporter: ['text', 'json', 'html'], // Formatos de reporte
+      include: ['src/**/*.{ts,tsx}'], // Incluye solo archivos TypeScript/TSX
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/main.tsx'], // Excluye archivos de prueba y el punto de entrada
     },
   },
-});
+} as VitestUserConfig);

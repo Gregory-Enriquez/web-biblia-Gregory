@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   getReinaValeraBooks,
   getBookChapters,
@@ -9,25 +9,52 @@ import { ArrowLeft, LogOut } from "lucide-react";
 import { FaBible } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc"; // Icono de Google
 import { AiFillGithub } from "react-icons/ai"; // Icono de GitHub
-
 import { getAuth, signOut } from "firebase/auth"; // Importar Firebase Auth
 import { useNavigate } from "react-router-dom"; // Para la navegación
+import { debounce } from "lodash"; // Para debounce en la búsqueda
+
+// Interfaces para tipar los datos
+interface Book {
+  id: string;
+  name: string;
+}
+
+interface Chapter {
+  id: string;
+  reference: string;
+}
+
+interface Verse {
+  id: string;
+  reference: string;
+  content?: string;
+}
+
+interface User {
+  email: string | null;
+  provider: string | null;
+}
 
 const ReinaValeraBooks: React.FC = () => {
   const auth = getAuth(); // Obtener la instancia de autenticación
   const navigate = useNavigate(); // Hook de navegación
-  const [books, setBooks] = useState<any[]>([]);
-  const [filteredBooks, setFilteredBooks] = useState<any[]>([]);
-  const [selectedBook, setSelectedBook] = useState<any | null>(null);
-  const [chapters, setChapters] = useState<any[]>([]);
-  const [selectedChapter, setSelectedChapter] = useState<any | null>(null);
-  const [verses, setVerses] = useState<any[]>([]);
-  const [selectedVerses, setSelectedVerses] = useState<any[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [verses, setVerses] = useState<Verse[]>([]);
+  const [selectedVerses, setSelectedVerses] = useState<Verse[]>([]);
   const [versesText, setVersesText] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [user, setUser] = useState<any>(null); // Estado para almacenar la información del usuario
+  const [user, setUser] = useState<User | null>(null); // Estado para almacenar la información del usuario
+
+  // Cache para libros, capítulos y versículos
+   
+  const [, setBooksCache] = useState<Record<string, Book[]>>({});
+  const [chaptersCache, setChaptersCache] = useState<Record<string, Chapter[]>>({});
+  const [versesCache, setVersesCache] = useState<Record<string, Verse[]>>({});
 
   // Obtener la información del usuario al cargar el componente
   useEffect(() => {
@@ -51,68 +78,88 @@ const ReinaValeraBooks: React.FC = () => {
       try {
         setLoading(true);
         const data = await getReinaValeraBooks();
-        const validBooks = data.data.filter((book: any) => book.name); // Filtrar elementos vacíos
+        const validBooks = data.data.filter((book: Book) => book.name); // Filtrar elementos vacíos
         setBooks(validBooks);
-        setFilteredBooks(validBooks);
+        setBooksCache((prev) => ({ ...prev, books: validBooks })); // Almacenar en caché
       } catch (error) {
         console.error("Error fetching books:", error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchBooks();
   }, []);
 
-  // Filtrar libros según la búsqueda
-  useEffect(() => {
-    setFilteredBooks(
-      books.filter((book) =>
-        book.name.toLowerCase().includes(search.toLowerCase())
-      )
+  // Filtrar libros según la búsqueda (con debounce)
+  const handleSearch = debounce((value: string) => {
+    setSearch(value);
+  }, 300);
+
+  // Calcular libros filtrados con useMemo
+  const filteredBooks = useMemo(() => {
+    return books.filter((book) =>
+      book.name.toLowerCase().includes(search.toLowerCase())
     );
-  }, [search, books]);
+  }, [books, search]);
 
   // Manejar clic en un libro
-  const handleBookClick = async (book: any) => {
+  const handleBookClick = async (book: Book) => {
     setSelectedBook(book);
     setSelectedChapter(null);
     setSelectedVerses([]);
     setVersesText([]);
-    try {
-      setLoading(true);
-      const data = await getBookChapters(book.id);
-      setChapters(data.data);
-    } catch (error) {
-      console.error("Error fetching chapters:", error);
-    } finally {
-      setLoading(false);
+
+    // Verificar si los capítulos ya están en caché
+    if (chaptersCache[book.id]) {
+      setChapters(chaptersCache[book.id]);
+    } else {
+      try {
+        setLoading(true);
+        const data = await getBookChapters(book.id);
+        setChapters(data.data);
+        setChaptersCache((prev) => ({ ...prev, [book.id]: data.data })); // Almacenar en caché
+      } catch (error) {
+        console.error("Error fetching chapters:", error);
+      } finally {
+        setLoading(false);
+      }
     }
+
     setTimeout(() => {
       document.getElementById("chapters-section")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
   // Manejar clic en un capítulo
-  const handleChapterClick = async (chapter: any) => {
+  const handleChapterClick = async (chapter: Chapter) => {
     setSelectedChapter(chapter);
     setSelectedVerses([]);
     setVersesText([]);
-    try {
-      setLoading(true);
-      const data = await getChapterVerses(chapter.id);
-      setVerses(data.data);
-    } catch (error) {
-      console.error("Error fetching verses:", error);
-    } finally {
-      setLoading(false);
+
+    // Verificar si los versículos ya están en caché
+    if (versesCache[chapter.id]) {
+      setVerses(versesCache[chapter.id]);
+    } else {
+      try {
+        setLoading(true);
+        const data = await getChapterVerses(chapter.id);
+        setVerses(data.data);
+        setVersesCache((prev) => ({ ...prev, [chapter.id]: data.data })); // Almacenar en caché
+      } catch (error) {
+        console.error("Error fetching verses:", error);
+      } finally {
+        setLoading(false);
+      }
     }
+
     setTimeout(() => {
       document.getElementById("verses-section")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
   // Manejar selección de versículos
-  const handleVerseToggle = (verse: any) => {
+  const handleVerseToggle = (verse: Verse) => {
     const alreadySelected = selectedVerses.some((v) => v.id === verse.id);
     if (alreadySelected) {
       setSelectedVerses((prev) => prev.filter((v) => v.id !== verse.id));
@@ -133,9 +180,6 @@ const ReinaValeraBooks: React.FC = () => {
         return verseA - verseB; // Orden ascendente
       });
 
-      // Actualizar el estado con los versículos ordenados
-      setSelectedVerses(sortedVerses);
-
       // Obtener los textos de los versículos en el orden correcto
       const texts = await Promise.all(
         sortedVerses.map(async (verse) => {
@@ -146,9 +190,8 @@ const ReinaValeraBooks: React.FC = () => {
         })
       );
 
-      // Actualizar estado con los textos obtenidos
-      setVersesText(texts);
-      setShowModal(true);
+      setVersesText(texts); // Actualizar el estado con los textos
+      setShowModal(true); // Mostrar el modal
     } catch (error) {
       console.error("Error fetching verses text:", error);
     } finally {
@@ -219,8 +262,7 @@ const ReinaValeraBooks: React.FC = () => {
             type="text"
             placeholder="Buscar libro..."
             className="p-2 sm:p-3 w-full rounded-xl border border-blue-400 focus:ring-2 focus:ring-blue-300 shadow-sm transition-all text-sm sm:text-base"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
           />
           {loading && <p className="text-center text-black mt-2">Cargando...</p>}
 

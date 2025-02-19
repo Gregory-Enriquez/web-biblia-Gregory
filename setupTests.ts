@@ -1,0 +1,1 @@
+import "@testing-library/jest-dom/vitest"; // Importa jest-dom para extender expect
